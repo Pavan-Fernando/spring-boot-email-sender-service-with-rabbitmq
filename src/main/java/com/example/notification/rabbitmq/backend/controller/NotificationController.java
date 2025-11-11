@@ -1,21 +1,26 @@
 package com.example.notification.rabbitmq.backend.controller;
 
+import com.example.notification.rabbitmq.backend.exception.CustomException;
 import com.example.notification.rabbitmq.backend.model.dto.external.NotificationMessageDto;
+import com.example.notification.rabbitmq.backend.model.dto.response.SuccessResponseDto;
 import com.example.notification.rabbitmq.backend.model.entity.NotificationLog;
 import com.example.notification.rabbitmq.backend.repository.NotificationLogRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 
 import jakarta.validation.Valid;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.example.notification.rabbitmq.backend.exception.pojo.ExceptionCode.*;
 import static com.example.notification.rabbitmq.backend.utils.Constant.EXCHANGE_NAME;
 import static com.example.notification.rabbitmq.backend.utils.Constant.ROUTING_KEY;
 
@@ -44,22 +49,30 @@ public class NotificationController {
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<NotificationLog> getById(@PathVariable UUID id) {
-        Optional<NotificationLog> opt = repository.findById(id);
-        return opt.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-
-    @GetMapping("/status/{status}")
-    public List<NotificationLog> getByStatus(@PathVariable String status) {
-        return repository.findByStatus(status.toUpperCase());
+    public ResponseEntity<SuccessResponseDto> getById(@PathVariable UUID id) throws CustomException {
+        NotificationLog opt = repository.findById(id).orElseThrow(() ->
+                new CustomException(
+                        HttpStatus.BAD_REQUEST,
+                        SBT007,
+                        "Email record not found with UUID: " + id
+                )
+        );
+        return new ResponseEntity<>(new SuccessResponseDto(opt.getId(), opt.getEmail(), opt.getStatus()), HttpStatus.OK);
     }
 
 
     @PostMapping("/send-test")
-    public ResponseEntity<String> sendTest(@Valid @RequestBody NotificationMessageDto dto) throws JsonProcessingException {
-        String payload = objectMapper.writeValueAsString(dto);
-        rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, payload);
-        return ResponseEntity.ok("Published to queue");
+    public ResponseEntity<SuccessResponseDto> sendTest(@Valid @RequestBody NotificationMessageDto dto) throws CustomException {
+        SuccessResponseDto email;
+        try {
+            email = (SuccessResponseDto) rabbitTemplate.convertSendAndReceive(EXCHANGE_NAME, ROUTING_KEY, objectMapper.writeValueAsString(dto));
+        } catch (JsonProcessingException e) {
+            throw new CustomException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    SBT006,
+                    "Payload converting failed: " + e.getMessage()
+            );
+        }
+        return new ResponseEntity<>(email, HttpStatus.OK);
     }
 }

@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/notification_db
     username: postgres
-    password: postgres
+    password: ENC(6pLZxW2vxdPXqqA9knY/buJ5QzG5DWGzvJovkAQKWcllqzCxLLmd2n6XCcRPv/SD)
   jpa:
     hibernate:
       ddl-auto: update
@@ -10,10 +10,10 @@ spring:
       hibernate:
         format_sql: true
   mail:
-    host: smtp.example.com
-    port: 465
-    username:
-    password:
+    host: smtp.gmail.com
+    port: 587
+    username: ENC(5f7aqT57J9aKwh0xwt70PdKJ1TFsw5Fryp7eFty82k+dxfoQtGfR0vaN+2K/1zSc)
+    password: ENC(5f7aqT57J9aKwh0xwt70PdKJ1TFsw5Fryp7eFty82k+dxfoQtGfR0vaN+2K/1zSc)
     properties:
       mail:
         smtp:
@@ -24,8 +24,10 @@ spring:
     host: localhost
     port: 5672
     username: guest
-    password: guest
-
+    password: ENC(kKPp92LzoGKeLBKEwYPOPi9gC6Cr5S+w7I1TmRxxiiF8YIBB+XHP9Hkw0l1fbxpI)
+  output:
+    ansi:
+      enabled: ALWAYS
 
 management:
   endpoints:

@@ -1,6 +1,8 @@
+version: "3.8"
+
 services:
   postgres-container:
-    image: postgres:14-alpine3.21
+    image: postgres:14-alpine
     container_name: postgres-container
     environment:
       POSTGRES_USER: postgres
@@ -10,6 +12,24 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - notification-net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq-container
+    ports:
+      - "5672:5672"     # RabbitMQ message port
+      - "15672:15672"   # RabbitMQ management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - notification-net
 
 volumes:
   postgres_data:
+
+networks:
+  notification-net:
+    driver: bridge
